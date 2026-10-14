@@ -142,6 +142,64 @@ audioContext.resume();
 }catch(e){}
 };
 </script>
+
+<section class="panel" id="studioMixer">
+  <h2>🎧 HORLARDORT MULTITRACK MIXER</h2>
+
+  <label for="micSource">Recording microphone</label>
+  <select id="micSource">
+    <option value="">Phone default microphone</option>
+  </select>
+  <button id="loadMics" type="button">Find microphones</button>
+
+  <label for="beatVolume">Beat volume</label>
+  <input id="beatVolume" type="range" min="0" max="100" value="75">
+
+  <label for="vocalVolume">Vocal volume</label>
+  <input id="vocalVolume" type="range" min="0" max="100" value="100">
+
+  <p id="mixerStatus" role="status">
+    Choose a beat and record your vocals to begin.
+  </p>
+</section>
+
+<script>
+const micSource = document.getElementById("micSource");
+const mixerStatus = document.getElementById("mixerStatus");
+
+document.getElementById("loadMics").onclick = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: true
+    });
+    stream.getTracks().forEach(track => track.stop());
+
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const microphones = devices.filter(d => d.kind === "audioinput");
+
+    micSource.innerHTML = "";
+    microphones.forEach((mic, index) => {
+      const option = document.createElement("option");
+      option.value = mic.deviceId;
+      option.textContent = mic.label || "Microphone " + (index + 1);
+      micSource.appendChild(option);
+    });
+
+    mixerStatus.textContent =
+      microphones.length + " microphone option(s) found.";
+  } catch (error) {
+    mixerStatus.textContent =
+      "Allow microphone access in your browser settings and try again.";
+  }
+};
+
+micSource.onchange = () => {
+  mixerStatus.textContent =
+    "Selected microphone: " +
+    (micSource.selectedOptions[0]?.textContent || "Default microphone") +
+    ". Re-select this device when starting a recording.";
+};
+</script>
 </body>
-  </html>
+</html>
   
