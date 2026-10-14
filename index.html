@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10091d">
+<title>HORLARDORT STUDIO</title>
+<style>
+:root{color-scheme:dark;--bg:#10091d;--panel:#201331;--purple:#9b5cff;--pink:#ed63cb;--text:#fff;--muted:#c2b4d3}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(145deg,#10091d,#21102d);color:var(--text);font-family:Arial,sans-serif}
+header{padding:22px 16px;background:#160d24;border-bottom:1px solid #49305d}
+h1{font-size:25px;margin:0;color:#d8b6ff;letter-spacing:1px}
+header p{color:var(--muted);margin-bottom:0}
+main{max-width:900px;margin:auto;padding:16px}
+.panel{background:var(--panel);border:1px solid #49305d;border-radius:16px;padding:16px;margin-bottom:16px}
+h2{font-size:18px;margin-top:0}
+button,.filelabel{background:var(--purple);color:white;border:0;padding:12px 15px;border-radius:10px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.45}
+.secondary{background:#382448}
+input[type=file]{max-width:100%;margin:10px 0}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+#wave{width:100%;height:100px;background:#130b20;border-radius:8px}
+label{display:block;margin:14px 0 6px;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--pink)}
+.status{color:#d8b6ff;overflow-wrap:anywhere}
+.track{padding:12px;background:#160d24;border-radius:10px;margin:10px 0}
+footer{text-align:center;padding:20px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+<h1>HORLARDORT STUDIO 🎙️</h1>
+<p>Your music. Your sound. Your studio.</p>
+</header>
+<main>
+<section class="panel">
+<h2>🎤 Vocal Recording</h2>
+<p>Connect headphones for better recording quality. Allow microphone access when asked.</p>
+<div class="controls">
+<button id="record">● Record</button>
+<button id="stop" class="secondary" disabled>■ Stop</button>
+<button id="play" class="secondary" disabled>▶ Play</button>
+<button id="download" class="secondary" disabled>⬇ Export vocal</button>
+</div>
+<p id="status" class="status">Ready to record.</p>
+<canvas id="wave" width="700" height="100"></canvas>
+<audio id="player" controls style="width:100%;margin-top:12px"></audio>
+</section>
+
+<section class="panel">
+<h2>🎚️ Studio Mixer</h2>
+<div class="track">
+<label for="volume">Master volume</label>
+<input id="volume" type="range" min="0" max="100" value="80">
+<label for="bass">Bass EQ</label>
+<input id="bass" type="range" min="-12" max="12" value="0">
+<label for="treble">Treble EQ</label>
+<input id="treble" type="range" min="-12" max="12" value="0">
+<label for="reverb">Reverb amount</label>
+<input id="reverb" type="range" min="0" max="100" value="0">
+<p class="status">Mixer controls apply to playback in this first version.</p>
+</div>
+</section>
+
+<section class="panel">
+<h2>🎵 Add a beat or audio track</h2>
+<input id="beatFile" type="file" accept="audio/*">
+<audio id="beatPlayer" controls style="width:100%;display:none"></audio>
+<p class="status">Choose an audio file from your phone to play a beat.</p>
+</section>
+</main>
+<footer>HORLARDORT STUDIO · First Web Studio Prototype</footer>
+
+<script>
+const $=id=>document.getElementById(id);
+let recorder,stream,chunks=[],audioContext,source,gain,filter,wetGain,dryGain;
+const status=$("status");
+const canvas=$("wave"),ctx=canvas.getContext("2d");
+function drawWave(){
+ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.strokeStyle="#b784ff";ctx.lineWidth=2;ctx.beginPath();
+for(let x=0;x<canvas.width;x++){
+let y=50+Math.sin(x*.07)*12+Math.sin(x*.21)*7;
+if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+}
+ctx.stroke();
+}
+drawWave();
+$("record").onclick=async()=>{
+try{
+stream=await navigator.mediaDevices.getUserMedia({audio:true});
+chunks=[];
+recorder=new MediaRecorder(stream);
+recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:recorder.mimeType||"audio/webm"});
+const url=URL.createObjectURL(blob);
+$("player").src=url;
+$("play").disabled=false;$("download").disabled=false;
+$("download").onclick=()=>{
+const a=document.createElement("a");
+a.href=url;a.download="Horlardort-Vocal.webm";a.click();
+};
+status.textContent="Recording saved in the player. You can play or export it.";
+stream.getTracks().forEach(t=>t.stop());
+};
+recorder.start();
+$("record").disabled=true;$("stop").disabled=false;
+status.textContent="Recording... sing your heart out!";
+}catch(e){status.textContent="Microphone unavailable. Open this page over HTTPS and allow microphone access.";}
+};
+$("stop").onclick=()=>{
+if(recorder&&recorder.state!=="inactive")recorder.stop();
+$("record").disabled=false;$("stop").disabled=true;
+};
+$("play").onclick=()=>$("player").play();
+$("beatFile").onchange=e=>{
+const file=e.target.files[0];if(!file)return;
+$("beatPlayer").src=URL.createObjectURL(file);
+$("beatPlayer").style.display="block";
+};
+$("volume").oninput=e=>{
+if(gain)gain.gain.value=Number(e.target.value)/100;
+};
+$("bass").oninput=e=>{if(filter)filter.frequency.value=Number(e.target.value)<0?200:Math.min(1000,250+Number(e.target.value)*50);};
+$("treble").oninput=e=>{if(filter)filter.Q.value=1;};
+$("reverb").oninput=e=>{
+status.textContent="Reverb setting: "+e.target.value+"%. Full reverb processing will be added in a later version.";
+};
+$("player").onplay=()=>{
+try{
+if(!audioContext){
+audioContext=new(window.AudioContext||window.webkitAudioContext)();
+source=audioContext.createMediaElementSource($("player"));
+gain=audioContext.createGain();
+filter=audioContext.createBiquadFilter();
+filter.type="lowshelf";filter.frequency.value=250;
+source.connect(filter);filter.connect(gain);gain.connect(audioContext.destination);
+}
+audioContext.resume();
+}catch(e){}
+};
+</script>
+</body>
+  </html>
+  
