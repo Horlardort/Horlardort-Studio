@@ -200,6 +200,84 @@ micSource.onchange = () => {
     ". Re-select this device when starting a recording.";
 };
 </script>
+<section class="panel" id="beatBrowser">
+  <h2>🎧 Beat Browser</h2>
+  <p>Find your next beat for HORLARDORT STUDIO.</p>
+
+  <label for="beatSearch">What kind of beat do you need?</label>
+  <input
+    id="beatSearch"
+    type="search"
+    placeholder="e.g. romantic 9ja Afrobeats"
+    style="width:100%;padding:12px;margin:10px 0;border-radius:8px;"
+  >
+
+  <label for="beatGenre">Choose a sound</label>
+  <select id="beatGenre"
+    style="width:100%;padding:12px;margin:10px 0;border-radius:8px;">
+    <option>9ja Flavour</option>
+    <option>Afrobeats</option>
+    <option>Fuji</option>
+    <option>Highlife</option>
+    <option>Apala</option>
+    <option>Juju</option>
+    <option>Afro-fusion</option>
+    <option>Amapiano</option>
+    <option>Hip-hop</option>
+    <option>Gospel</option>
+    <option>Love Beat</option>
+    <option>Sad Beat</option>
+    <option>Street-pop</option>
+  </select>
+
+  <p>Choose where to search:</p>
+
+  <button onclick="searchBeats('beatstars.com')">
+    Search BeatStars
+  </button>
+
+  <button onclick="searchBeats('airbit.com')">
+    Search Airbit
+  </button>
+
+  <button onclick="searchBeats('soundclick.com')">
+    Search SoundClick
+  </button>
+
+  <button onclick="searchBeats('naijabeats.com')">
+    Search NaijaBeats
+  </button>
+
+  <button onclick="searchBeats('instrumentals.com.ng')">
+    Search Nigerian Instrumentals
+  </button>
+
+  <p id="beatSearchStatus">
+    Choose a genre and search for your beat.
+  </p>
+</section>
+
+<script>
+function searchBeats(site) {
+  const term =
+    document.getElementById("beatSearch").value.trim();
+  const genre =
+    document.getElementById("beatGenre").value;
+
+  const query = [genre, term, "instrumental beat"]
+    .filter(Boolean)
+    .join(" ");
+
+  document.getElementById("beatSearchStatus").textContent =
+    "Searching " + site + " for " + query + "...";
+
+  const url =
+    "https://www.google.com/search?q=" +
+    encodeURIComponent("site:" + site + " " + query);
+
+  window.open(url, "_blank");
+}
+</script>
 </body>
 </html>
   
